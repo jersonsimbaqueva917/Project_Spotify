@@ -5,7 +5,7 @@ const readline = require('readline');
 
 const serviceAccount = require('./serviceAccountKey.json');
 
-// IMPORTANTE: Asegúrate de que este ID sea el que aparece en tu consola de Firebase
+
 const PROJECT_ID = serviceAccount.project_id; 
 
 admin.initializeApp({
@@ -13,7 +13,12 @@ admin.initializeApp({
     projectId: PROJECT_ID
 });
 
+<<<<<<< HEAD
 // Forzamos la base de datos (default). 
+=======
+// Forzamos la base de datos spotify100. 
+
+>>>>>>> cfd709a (Mejora pantalla)
 const db = getFirestore('spotify100'); 
 
 async function uploadData() {
@@ -27,10 +32,10 @@ async function uploadData() {
         let count = 0;
 
         for await (const line of rl) {
-            if (isFirstLine) { isFirstLine = false; continue; } // Saltamos encabezados
+            if (isFirstLine) { isFirstLine = false; continue; } // Saltamos encabezados por si hay espacios en los nombres
             if (!line.trim()) continue;
 
-            // Detectamos el separador automáticamente
+            // Detectamos el separador automáticamente, por si viene con ',' o ';'
             const separator = line.includes(';') ? ';' : ',';
             const columns = line.split(separator);
 
@@ -42,13 +47,15 @@ async function uploadData() {
             if (!rank || isNaN(rank)) continue;
 
             try {
-                // Guardamos en la colección 'top_songs'
+                // Guardamos en la colección 'top_songs' las 100 mejores de Spotify en 2025
                 await db.collection('top_songs').doc(rank).set({
                     alltime_rank: parseInt(rank),
                     title: title,
                     artist: artist,
                     streams_billions: columns[3] || "0",
                     genre: columns[4] || "N/A",
+					year: columns[6],
+					country: columns[7],
                     updated_at: new Date().toISOString()
                 });
                 console.log(`✅ [${rank}] ${title} guardado.`);

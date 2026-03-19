@@ -49,3 +49,33 @@ button {
 
 .card h3 { margin-top: 0; color: #1DB954; }
 .card p { font-size: 0.9em; color: #b3b3b3; margin: 5px 0; }
+
+.extra-info {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+}
+
+.tag {
+            background: #282828;
+            color: #b3b3b3;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #333;
+}
+
+.meta-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            border-top: 1px solid #282828;
+            padding-top: 10px;
+            margin-top: 5px;
+}
+
+.streams {
+            color: var(--spotify-green);
+            font-weight: bold;
+}

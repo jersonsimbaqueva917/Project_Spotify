@@ -50,10 +50,10 @@
 
     <script>
         // Función para renderizar las tarjetas actualizadas con Genre y Streams
-        function renderizar(datos) {
+		function renderizar(datos) {
             const contenedor = document.getElementById('contenedor');
             if (!datos || datos.length === 0) {
-                contenedor.innerHTML = "<p>No se encontraron resultados para esta sugerencia.</p>";
+                contenedor.innerHTML = "<p>No se encontraron resultados.</p>";
                 return;
             }
             contenedor.innerHTML = datos.map(cancion => `
@@ -61,9 +61,15 @@
                     <span class="rank">#${cancion.alltime_rank}</span>
                     <div class="title" title="${cancion.title}">${cancion.title}</div>
                     <div class="artist">${cancion.artist}</div>
+                    
+                    <div class="extra-info">
+                        <span class="tag">📅 ${cancion.year || 'N/A'}</span>
+                        <span class="tag">📍 ${cancion.country || 'Global'}</span>
+                    </div>
+
                     <div class="meta-info">
-                        <span class="genre">${cancion.genre || 'Desconocido'}</span>
-                        <span class="streams">🎧 ${cancion.streams_billions || '0'} Billones</span>
+                        <span class="genre">${cancion.genre || 'N/A'}</span>
+                        <span class="streams">🎧 ${cancion.streams_billions || '0'}B</span>
                     </div>
                 </div>
             `).join('');
