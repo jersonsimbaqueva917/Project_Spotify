@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spotify All-Time Top 100 - Sugerencias</title>
@@ -124,6 +125,71 @@
 
         // Ejecutar al cargar la página
         window.onload = cargarTop10;
+		
+		let miGrafica; // Variable global para controlar la gráfica
+
+        async function generarGrafica() {
+            const canciones = [];
+            
+            // 1. Obtenemos todos los datos (puedes crear un endpoint /api/todos o pedirlos en bucle)
+            // Para este ejemplo, usaremos una técnica para obtener el Top 100 completo
+            for(let i = 1; i <= 100; i++) {
+                const res = await fetch(`/api/buscar?termino=${i}`);
+                const data = await res.json();
+                if(data.length > 0) canciones.push(data[0]);
+            }
+        
+            // 2. Contamos cuántas canciones hay por año
+            const conteoAnios = {};
+            canciones.forEach(c => {
+                const anio = c.year || "S/N";
+                conteoAnios[anio] = (conteoAnios[anio] || 0) + 1;
+            });
+        
+            // 3. Ordenamos los años cronológicamente
+            const aniosOrdenados = Object.keys(conteoAnios).sort();
+            const valores = aniosOrdenados.map(a => conteoAnios[a]);
+        
+            // 4. Creamos la gráfica
+            const ctx = document.getElementById('graficaAnios').getContext('2d');
+            
+            if (miGrafica) miGrafica.destroy(); // Destruir si ya existía una
+        
+            miGrafica = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: aniosOrdenados,
+                    datasets: [{
+                        label: 'Cantidad de Canciones',
+                        data: valores,
+                        backgroundColor: '#1DB954', // Verde Spotify
+                        borderColor: '#1ed760',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#282828' }, ticks: { color: '#b3b3b3' } },
+                        x: { grid: { display: false }, ticks: { color: '#b3b3b3' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: 'white' } }
+                    }
+                }
+            });
+        }
+        
+        // Llamamos a la función al cargar la página junto con el Top 10
+        window.onload = () => {
+            cargarTop10();
+            generarGrafica();
+        };
+		
     </script>
+	<div style="width: 80%; margin: 50px auto; background: #181818; padding: 20px; border-radius: 10px;">
+    <h2 style="text-align: center; color: #1DB954;">Distribución por Año de Lanzamiento</h2>
+    <canvas id="graficaAnios"></canvas>
+</div>
 </body>
 </html>
