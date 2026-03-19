@@ -14,7 +14,6 @@ admin.initializeApp({
 });
 
 // Forzamos la base de datos (default). 
-// Si le pusiste nombre a tu base de datos en Firebase, cámbialo aquí.
 const db = getFirestore('spotify100'); 
 
 async function uploadData() {
