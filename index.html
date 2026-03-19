@@ -2,37 +2,89 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Spotify Stats</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify All-Time Top 100</title>
     <style>
-        body { background: #121212; color: white; font-family: sans-serif; text-align: center; padding: 50px; }
-        input { padding: 10px; border-radius: 5px; border: none; width: 250px; }
-        button { padding: 10px 20px; border-radius: 5px; background: #1DB954; color: white; border: none; cursor: pointer; }
-        #resultados { margin-top: 30px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-        .card { background: #181818; padding: 20px; border-radius: 10px; border: 1px solid #282828; width: 200px; }
+        :root { --spotify-green: #1DB954; --dark-bg: #121212; --card-bg: #181818; }
+        body { background-color: var(--dark-bg); color: white; font-family: 'Circular', 'Segoe UI', sans-serif; margin: 0; padding: 20px; text-align: center; }
+        
+        .header { padding: 40px 0; }
+        h1 { font-size: 2.5rem; margin-bottom: 20px; }
+        
+        .search-box { margin-bottom: 50px; }
+        input { padding: 14px; border-radius: 25px; border: none; width: 300px; font-size: 1rem; outline: none; }
+        button { padding: 14px 28px; border-radius: 25px; background: var(--spotify-green); color: white; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; margin-left: 10px; }
+        button:hover { transform: scale(1.05); background: #1ed760; }
+
+        h2 { text-align: left; margin-left: 5%; color: var(--spotify-green); border-bottom: 1px solid #282828; padding-bottom: 10px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; padding: 0 5%; }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 8px; text-align: left; border: 1px solid transparent; transition: 0.3s; }
+        .card:hover { background: #282828; border-color: #3e3e3e; }
+        .rank { color: var(--spotify-green); font-weight: bold; font-size: 1.2rem; }
+        .title { font-size: 1.1rem; margin: 10px 0 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .artist { color: #b3b3b3; font-size: 0.9rem; }
     </style>
 </head>
 <body>
-    <h1>🎵 Buscador Spotify Top 100</h1>
-    <input type="text" id="termino" placeholder="Escribe el Rank o Artista...">
-    <button onclick="buscar()">Buscar</button>
 
-    <div id="resultados"></div>
+    <div class="header">
+        <h1>🎵 Spotify Top 100</h1>
+        <div class="search-box">
+            <input type="text" id="busqueda" placeholder="Busca por Rank o Artista...">
+            <button onclick="realizarBusqueda()">Buscar</button>
+        </div>
+    </div>
+
+    <h2 id="titulo-seccion">Top 10 Global</h2>
+    <div id="contenedor" class="grid">
+        </div>
 
     <script>
-        async function buscar() {
-            const termino = document.getElementById('termino').value;
-            const res = await fetch(`/api/buscar?termino=${termino}`);
-            const data = await res.json();
-            
-            const contenedor = document.getElementById('resultados');
-            contenedor.innerHTML = data.map(item => `
+        // Función para renderizar las tarjetas de canciones
+        function renderizar(datos) {
+            const contenedor = document.getElementById('contenedor');
+            if (!datos || datos.length === 0) {
+                contenedor.innerHTML = "<p>No se encontraron resultados.</p>";
+                return;
+            }
+            contenedor.innerHTML = datos.map(cancion => `
                 <div class="card">
-                    <h3>#${item.alltime_rank}</h3>
-                    <p><strong>${item.title}</strong></p>
-                    <p>${item.artist}</p>
+                    <span class="rank">#${cancion.alltime_rank}</span>
+                    <div class="title">${cancion.title}</div>
+                    <div class="artist">${cancion.artist}</div>
                 </div>
             `).join('');
         }
+
+        // Función que busca lo que el usuario escribe
+        async function realizarBusqueda() {
+            const termino = document.getElementById('busqueda').value;
+            if(!termino) return cargarTop10(); // Si está vacío, vuelve al Top 10
+
+            document.getElementById('titulo-seccion').innerText = "Resultados de búsqueda";
+            const res = await fetch(`/api/buscar?termino=${termino}`);
+            const datos = await res.json();
+            renderizar(datos);
+        }
+
+        // Función que carga el Top 10 al iniciar
+        async function cargarTop10() {
+            document.getElementById('titulo-seccion').innerText = "Top 10 Global";
+            const resultados = [];
+            
+            // Hacemos 10 peticiones rápidas para los primeros 10 puestos
+            // O podrías modificar tu API para que acepte un parámetro "limit=10"
+            for(let i = 1; i <= 10; i++) {
+                const res = await fetch(`/api/buscar?termino=${i}`);
+                const data = await res.json();
+                if(data.length > 0) resultados.push(data[0]);
+            }
+            renderizar(resultados);
+        }
+
+        // Ejecutar al cargar la página
+        window.onload = cargarTop10;
     </script>
 </body>
 </html>
