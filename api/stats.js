@@ -9,7 +9,7 @@ if (!admin.apps.length) {
         projectId: process.env.FIREBASE_PROJECT_ID
     });
 }
-const db = getFirestore('(default)');
+const db = getFirestore('spotify100');
 
 export default async function handler(req, res) {
     try {
