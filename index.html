@@ -109,81 +109,60 @@
             }, 300);
         }
 
-        // Función que carga el Top 10 al iniciar (Igual que antes)
-        async function cargarTop10() {
-            document.getElementById('titulo-seccion').innerText = "Top 10 Global";
-            const resultados = [];
-            for(let i = 1; i <= 10; i++) {
-                try {
-                    const res = await fetch(`/api/buscar?termino=${i}`);
-                    const data = await res.json();
-                    if(data && data.length > 0) resultados.push(data[0]);
-                } catch(e) {}
-            }
-            renderizar(resultados);
-        }
-
-        // Ejecutar al cargar la página
-        window.onload = cargarTop10;
+        
 		
-		let miGrafica; // Variable global para controlar la gráfica
+		let miGrafica;
 
-        async function generarGrafica() {
-            const canciones = [];
-            
-            // 1. Obtenemos todos los datos (puedes crear un endpoint /api/todos o pedirlos en bucle)
-            // Para este ejemplo, usaremos una técnica para obtener el Top 100 completo
-            for(let i = 1; i <= 100; i++) {
-                const res = await fetch(`/api/buscar?termino=${i}`);
-                const data = await res.json();
-                if(data.length > 0) canciones.push(data[0]);
-            }
-        
-            // 2. Contamos cuántas canciones hay por año
-            const conteoAnios = {};
-            canciones.forEach(c => {
-                const anio = c.year || "S/N";
-                conteoAnios[anio] = (conteoAnios[anio] || 0) + 1;
-            });
-        
-            // 3. Ordenamos los años cronológicamente
-            const aniosOrdenados = Object.keys(conteoAnios).sort();
-            const valores = aniosOrdenados.map(a => conteoAnios[a]);
-        
-            // 4. Creamos la gráfica
-            const ctx = document.getElementById('graficaAnios').getContext('2d');
-            
-            if (miGrafica) miGrafica.destroy(); // Destruir si ya existía una
-        
-            miGrafica = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: aniosOrdenados,
-                    datasets: [{
-                        label: 'Cantidad de Canciones',
-                        data: valores,
-                        backgroundColor: '#1DB954', // Verde Spotify
-                        borderColor: '#1ed760',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#282828' }, ticks: { color: '#b3b3b3' } },
-                        x: { grid: { display: false }, ticks: { color: '#b3b3b3' } }
+        async function inicializarApp() {
+            try {
+                // 1. Una sola petición para obtener todo el Top 100
+                const res = await fetch('/api/stats');
+                const todasLasCanciones = await res.json();
+
+                // 2. Renderizar el Top 10 inicial
+                renderizar(todasLasCanciones.slice(0, 10));
+
+                // 3. Procesar datos para la gráfica
+                const conteoAnios = {};
+                todasLasCanciones.forEach(c => {
+                    const anio = c.year || "N/A";
+                    conteoAnios[anio] = (conteoAnios[anio] || 0) + 1;
+                });
+
+                const aniosOrdenados = Object.keys(conteoAnios).sort();
+                const valores = aniosOrdenados.map(a => conteoAnios[a]);
+
+                // 4. Dibujar la gráfica
+                const ctx = document.getElementById('graficaAnios').getContext('2d');
+                if (miGrafica) miGrafica.destroy();
+
+                miGrafica = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: aniosOrdenados,
+                        datasets: [{
+                            label: 'Canciones en el Top 100',
+                            data: valores,
+                            backgroundColor: '#1DB954',
+                            borderRadius: 5
+                        }]
                     },
-                    plugins: {
-                        legend: { labels: { color: 'white' } }
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { labels: { color: 'white' } } },
+                        scales: {
+                            y: { ticks: { color: '#b3b3b3' }, grid: { color: '#282828' } },
+                            x: { ticks: { color: '#b3b3b3' }, grid: { display: false } }
+                        }
                     }
-                }
-            });
+                });
+            } catch (error) {
+                console.error("Error al cargar estadísticas:", error);
+            }
         }
+
         
-        // Llamamos a la función al cargar la página junto con el Top 10
-        window.onload = () => {
-            cargarTop10();
-            generarGrafica();
+        window.onload = inicializarApp;
         };
 		
     </script>
