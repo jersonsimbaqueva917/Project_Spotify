@@ -1,6 +1,7 @@
 const admin = require('firebase-admin');
 const { getFirestore } = require('firebase-admin/firestore');
 
+// Inicialización de Firebase
 if (!admin.apps.length) {
   try {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -9,61 +10,83 @@ if (!admin.apps.length) {
       credential: admin.credential.cert(serviceAccount),
       projectId: process.env.FIREBASE_PROJECT_ID
     });
-  } catch (e) { console.error("Error init:", e.message); }
+  } catch (e) {
+    console.error("Error de inicialización:", e.message);
+  }
 }
 
+// Asegúrate de que el nombre coincide con tu base de datos (spotify100)
 const db = getFirestore('spotify100');
 
-// Función auxiliar para poner la primera letra en mayúscula (ej: "colombia" -> "Colombia")
+// Función para capitalizar texto (ej: "colombia" -> "Colombia")
 function capitalizar(str) {
   return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 }
 
 export default async function handler(req, res) {
   const { termino } = req.query;
-  if (!termino) return res.status(200).json([]);
+
+  if (!termino) {
+    return res.status(200).json([]);
+  }
 
   try {
     const songsRef = db.collection('top_songs');
     let resultados = [];
-    
-    // Normalizamos el término: "uSa" -> "USA" o "the weeknd" -> "The Weeknd"
-    const terminoOriginal = termino.trim();
-    const terminoMayuscula = terminoOriginal.toUpperCase();
-    const terminoCapitalizado = capitalizar(terminoOriginal);
+    const busqueda = termino.trim();
 
-    // 1. Si es número (Rank o Año), lo manejamos igual
-    if (!isNaN(terminoOriginal)) {
-      const num = terminoOriginal;
-      const resRank = await songsRef.doc(num).get();
-      if (resRank.exists) resultados.push(resRank.data());
+    // --- 1. LÓGICA PARA NÚMEROS (RANK Y AÑO) ---
+    if (!isNaN(busqueda)) {
+      const valorNumerico = parseInt(busqueda);
 
-      const resAnio = await songsRef.where('year', '==', parseInt(num)).get();
-      resAnio.forEach(d => {
+      // Buscar por ID de documento (Rank exacto)
+      const docRef = await songsRef.doc(busqueda).get();
+      if (docRef.exists) {
+        resultados.push(docRef.data());
+      }
+
+      // Buscar por campo 'year' (Debe ser tipo Number en Firestore)
+      const snapAnio = await songsRef.where('year', '==', valorNumerico).get();
+      snapAnio.forEach(d => {
         if (!resultados.find(r => r.alltime_rank === d.data().alltime_rank)) {
           resultados.push(d.data());
         }
       });
     }
 
-    // 2. Búsqueda Multi-Formato (Artista y País)
-    // Creamos una lista de variantes para buscar
-    const variantes = [terminoOriginal, terminoMayuscula, terminoCapitalizado];
+    // --- 2. LÓGICA PARA TEXTO (ARTISTA Y PAÍS) ---
+    // Generamos variantes para ignorar mayúsculas/minúsculas manualmente
+    const variantes = [
+      busqueda, 
+      busqueda.toLowerCase(), 
+      busqueda.toUpperCase(), 
+      capitalizar(busqueda)
+    ];
     
-    // Eliminamos duplicados de las variantes para no hacer peticiones de más
+    // Eliminamos duplicados de las variantes
     const variantesUnicas = [...new Set(variantes)];
 
     for (const v of variantesUnicas) {
-      // Buscar por Artista
-      const snapArt = await songsRef.where('artist', '>=', v).where('artist', '<=', v + '\uf8ff').limit(5).get();
+      // Buscar por Artista (Sugerencia "empieza con")
+      const snapArt = await songsRef
+        .where('artist', '>=', v)
+        .where('artist', '<=', v + '\uf8ff')
+        .limit(10)
+        .get();
+      
       snapArt.forEach(d => {
         if (!resultados.find(r => r.alltime_rank === d.data().alltime_rank)) {
           resultados.push(d.data());
         }
       });
 
-      // Buscar por País
-      const snapPais = await songsRef.where('country', '>=', v).where('country', '<=', v + '\uf8ff').limit(5).get();
+      // Buscar por País (Sugerencia "empieza con")
+      const snapPais = await songsRef
+        .where('country', '>=', v)
+        .where('country', '<=', v + '\uf8ff')
+        .limit(10)
+        .get();
+
       snapPais.forEach(d => {
         if (!resultados.find(r => r.alltime_rank === d.data().alltime_rank)) {
           resultados.push(d.data());
@@ -71,8 +94,11 @@ export default async function handler(req, res) {
       });
     }
 
-    res.status(200).json(resultados);
+    // Enviamos los resultados (máximo 20 para no saturar el frontend)
+    res.status(200).json(resultados.slice(0, 20));
+
   } catch (error) {
+    console.error("Error en la búsqueda:", error);
     res.status(500).json({ error: error.message });
   }
 }

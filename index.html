@@ -33,6 +33,49 @@
         /* Pequeño spinner de carga */
         .loader { display: none; position: absolute; right: 15px; top: 12px; border: 3px solid #f3f3f3; border-top: 3px solid var(--spotify-green); border-radius: 50%; width: 15px; height: 15px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+		
+		/* --- Nuevos Estilos Sugeridos --- */
+
+        /* Animación para que la gráfica aparezca suavemente */
+        canvas {
+            max-height: 400px;
+            animation: fadeIn 1.5s ease-in-out;
+            margin-top: 20px;
+        }
+
+        /* Estilo para cuando no hay resultados en la búsqueda */
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-style: italic;
+            grid-column: 1 / -1; /* Ocupa todo el ancho en el grid */
+        }
+
+        /* Definición de la animación fadeIn */
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        /* Efecto de pulso para el ranking (opcional, se ve muy pro) */
+        .rank {
+            background: rgba(29, 185, 84, 0.1);
+            padding: 2px 8px;
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+
+        .card:hover .rank {
+            background: var(--spotify-green);
+            color: black;
+        }
     </style>
 </head>
 <body>
