@@ -15,7 +15,6 @@ if (!admin.apps.length) {
   }
 }
 
-// Asegúrate de que el nombre coincide con tu base de datos (spotify100)
 const db = getFirestore('spotify100');
 
 // Función para capitalizar texto (ej: "colombia" -> "Colombia")
